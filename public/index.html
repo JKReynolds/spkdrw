@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Speech Recording</title>
+</head>
+
+<style>
+  body{
+    font-family: sans-serif;
+  }
+
+  #colorSamples{
+    color:#9DD9D2;
+    color:#5DD9C1;
+    color:#2CA6A4;
+    color:#665687;
+    color:#190933;
+  }
+
+  #topbar{
+    position:fixed;
+    left:0px;
+    top:0;
+    width:100%;
+    height:10em;
+    background-color:#190933;
+  }
+
+  #topbar-title{
+    color:#665687;
+    text-align:center;
+    display:block;
+    width:5em;
+    padding:0.2em;
+    margin-top:.2em;
+    margin-left:auto;
+    margin-right:auto;
+    border-style:solid;
+    border-radius:1em;
+    border-width:8px;
+    font-size: 4em;
+  }
+
+  #sideBar{
+    position:fixed;
+    left:0px;
+    top:10em;
+    width:20em;
+    height:100%;
+    color:#190933;
+    background-color: #5DD9C1;
+  }
+
+  #speechResult{
+    position: absolute;
+    top:2em;
+    left:0em;
+    background-color: #665687;
+  }
+
+  #drawingBoard{
+    position:fixed;
+    top:10em;
+    left:20em;
+    width:100%;
+    height:100%;
+    background-color:#9DD9D2;
+  }
+
+  #drawing{
+    position:fixed;
+    width:750px;
+    height:750px;
+    top:12em;
+    left:22em;
+    background-color:white;
+  }
+
+  #canvas{
+    display:none;
+  }
+
+  #png-container{
+    display:none;
+  }
+
+</style>
+
+  <body>
+    <title>SPKDRW</title>
+
+    <script>
+      window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+      let finalTranscript = '';
+      let recognition = new window.SpeechRecognition();
+      
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 10;
+      recognition.continuous = true;
+      
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        for (let i = event.resultIndex, len = event.results.length; i < len; i++) {
+          let transcript = event.results[i][0].transcript;
+        
+          if (event.results[i].isFinal) {
+            finalTranscript = ""; //testing
+            finalTranscript += transcript;
+            check();
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        check = () =>{
+          if (finalTranscript.includes("rectangle") || finalTranscript.includes("Rectangle")){
+            addRect(Math.floor(Math.random()*500),Math.floor(Math.random()*500),getRandomColor(),Math.floor(Math.random()*500),Math.floor(Math.random()*500))
+            drw();
+          }
+          else if(finalTranscript.includes("circle") || finalTranscript.includes("Circle")){
+            addCircle(Math.floor(Math.random()*50),getRandomColor(),Math.floor(Math.random()*500),Math.floor(Math.random()*500))
+            drw();
+          }
+          else if(finalTranscript.includes("ellipse") || finalTranscript.includes("Ellipse")){
+            addEllipse(Math.floor(Math.random()*200),Math.floor(Math.random()*200),getRandomColor(),Math.floor(Math.random()*500),Math.floor(Math.random()*500))
+            drw();
+          }
+          else if(finalTranscript.includes("line") || finalTranscript.includes("Line")){
+            addLine(Math.floor(Math.random()*500),Math.floor(Math.random()*500),Math.floor(Math.random()*500), Math.floor(Math.random()*500),Math.floor(Math.random()*10),getRandomColor())
+            drw();
+          }
+
+        }
+
+        document.getElementById('speechResult').innerHTML = finalTranscript + '<i style="color:#ddd;">' + interimTranscript + '</>';
+        
+      }
+      recognition.start();
+
+
+    </script>
+
+    <div id = "topbar">
+      <div id="topbar-title">SPKDRW</div>
+    </div>
+
+    <div id = "sideBar">
+      
+      <div id="controls">
+        <button onclick="{drw()}">Update</button>
+        <button onclick="{clr()}">Clear</button>
+        <button onclick="{test()}">test</button>
+        <button onclick="{png()}">png</button>
+        <a id = "dwnld" download="FILENAME.EXT">Download</a>
+
+      </div>
+
+      <div id = "speechResult"></div>
+
+    
+    </div>
+
+    <div id="drawingBoard">
+
+          <svg id ="drawing">
+          </svg>
+          <canvas id="canvas" width="750" height="750"></canvas>
+          <div id="png-container"></div>
+    </div>
+
+  </body>
+</html>
+
+<script>
+  var shapes = [];
+  const drawing = document.getElementById('drawing');
+
+  drw = () => {
+    drawing.innerHTML="";
+    console.log("draw")
+    console.log(shapes);
+    for (var i = 0;i < shapes.length;i++){
+      var currShape = shapes[i];
+      if (currShape.type === "rect"){
+        drawRect(currShape.width,currShape.height,currShape.fill,currShape.xPos,currShape.yPos);
+      }
+      else if (currShape.type === "circle"){
+        drawCircle(currShape.radius,currShape.fill,currShape.xPos,currShape.yPos);
+      }
+      else if (currShape.type === "ellipse"){
+        drawEllipse(currShape.radiusX,currShape.radiusY,currShape.fill,currShape.xPos,currShape.yPos);
+      }
+      else if (currShape.type === "line"){
+        drawLine(currShape.xOne,currShape.yOne,currShape.xTwo,currShape.yTwo,currShape.strokeWidth,currShape.strokeColor);
+      }
+
+    }
+  }
+
+  clr = () => {
+    console.log("clear")
+    console.log("Before shapes: " + shapes.length)
+    shapes = [];
+    console.log("After shapes: " + shapes.length)
+    drawing.innerHTML = "";
+    document.querySelector('#dwnld').href = "";
+    document.getElementById("png-container").innerHTML = "";
+    var canvas = document.getElementById("canvas");
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,750,750);
+
+
+  }
+
+  drawRect = (w,h,f,x,y)=>{
+    console.log("rect: ",w,h,f,x,y)
+    drawing.innerHTML=drawing.innerHTML+"<rect width=" + w + ' height=' + h + ' fill="' + f + '" x =' + x + ' y = ' + y + ' />'
+  }
+
+  addRect = (w,h,f,x,y)=>{
+    shapes.push({type:"rect",width:w,height:h,fill:f,xPos:x,yPos:y})
+  }
+
+  drawCircle = (r,f,x,y) => {
+    console.log("circle: ",r,f,x,y)
+    drawing.innerHTML=drawing.innerHTML+"<circle r=" + r + ' fill="' + f + '" cx =' + x + ' cy = ' + y + ' />'
+  }
+
+  addCircle = (r,f,x,y) => {
+    shapes.push({type:"circle",radius:r,fill:f,xPos:x,yPos:y})
+  }
+
+  drawEllipse = (rx,ry,f,x,y) => {
+    console.log("ellipse: ",rx,ry,f,x,y)
+    drawing.innerHTML=drawing.innerHTML+"<ellipse rx=" + rx + ' ry="' + ry + '" fill="' + f + '" cx =' + x + ' cy = ' + y + ' />'
+  }
+
+  addEllipse = (rx,ry,f,x,y) => {
+    shapes.push({type:"ellipse",radiusX:rx,radiusY:ry,fill:f,xPos:x,yPos:y})
+  }
+
+  drawLine = (x1,y1,x2,y2,s,sc) => {
+    console.log("line: ",x1,y1,x2,y2,s,sc)
+    drawing.innerHTML=drawing.innerHTML+"<line x1=" + x1 + ' y1="' + y1 + '" stroke="' + sc + '" stroke-width =' + s + ' x2 = ' + x2 + ' y2=' + y2 + '/>'
+  }
+
+  addLine = (x1,y1,x2,y2,s,sc) => {
+    shapes.push({type:"line",xOne:x1,yOne:y1,strokeColor:sc,strokeWidth:s,xTwo:x2,yTwo:y2})
+  }
+
+
+  png = () =>{
+    var svgString = new XMLSerializer().serializeToString(document.querySelector('svg'));
+
+    var canvas = document.getElementById("canvas");
+    var ctx = canvas.getContext("2d");
+    var DOMURL = self.URL || self.webkitURL || self;
+    var img = new Image();
+    var svg = new Blob([svgString], {type: "image/svg+xml;charset=utf-8"});
+    var url = DOMURL.createObjectURL(svg);
+
+    img.onload = function() {
+        ctx.drawImage(img, 0, 0);
+        var png = canvas.toDataURL("image/png");
+        // document.querySelector('#png-container').innerHTML = '<img src="'+png+'"/>';
+        document.querySelector('#dwnld').href = png;
+        DOMURL.revokeObjectURL(png);
+    };
+    img.src = url;
+  }
+
+
+  test = () => {
+    addRect(Math.floor(Math.random()*500),Math.floor(Math.random()*500),getRandomColor(),Math.floor(Math.random()*500),Math.floor(Math.random()*500))
+    addCircle(Math.floor(Math.random()*50),getRandomColor(),Math.floor(Math.random()*500),Math.floor(Math.random()*500))
+    addEllipse(Math.floor(Math.random()*50),Math.floor(Math.random()*50),getRandomColor(),Math.floor(Math.random()*500),Math.floor(Math.random()*500))
+    addLine(Math.floor(Math.random()*500),Math.floor(Math.random()*500),Math.floor(Math.random()*500), Math.floor(Math.random()*500),Math.floor(Math.random()*10),getRandomColor())
+  }
+  
+  getRandomColor = () => {
+  var letters = '0123456789ABCDEF';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
+  
+
+
+</script>
