@@ -88,18 +88,37 @@
     display:none;
   }
 
+  #stateBox{
+    position:fixed;
+    top:20em;
+    left:0em;
+    width:20em;
+    height:3em;
+    background-color:#2CA6A4; 
+    display:block
+  }
+
 </style>
 
   <body>
     <title>SPKDRW</title>
 
     <script>
+      var state = "start";
+      var subState = 0;
+      var shape;
+
       window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
       let finalTranscript = '';
       let recognition = new window.SpeechRecognition();
       
+      // var grammar = '#JSGF V1.0; grammar spkdrw; public <color> = aqua | azure | beige | bisque | black | blue | brown | chocolate | coral | crimson | cyan | fuchsia | ghostwhite | gold | goldenrod | gray | green | indigo | ivory | khaki | lavender | lime | linen | magenta | maroon | moccasin | navy | olive | orange | orchid | peru | pink | plum | purple | red | salmon | sienna | silver | snow | tan | teal | thistle | tomato | turquoise | violet | white | yellow ;'
+      // var speechRecognitionList = new SpeechGrammarList();
+      // speechRecognitionList.addFromString(grammer,1);
+
+      // recognition.grammers = speechRecognitionList;
       recognition.interimResults = true;
-      recognition.maxAlternatives = 10;
+      recognition.maxAlternatives = 1;
       recognition.continuous = true;
       
       recognition.onresult = (event) => {
@@ -110,7 +129,8 @@
           if (event.results[i].isFinal) {
             finalTranscript = ""; //testing
             finalTranscript += transcript;
-            check();
+            // check();
+            stateRouter();
           } else {
             interimTranscript += transcript;
           }
@@ -134,6 +154,94 @@
             drw();
           }
 
+          state = "start";
+          document.getElementById("stateBox").innerHTML = "";
+        }
+
+        checkTwo = () =>{
+          if (shape === "rectangle"){
+            addRect(Math.floor(Math.random()*500),Math.floor(Math.random()*500),shapeColor,Math.floor(Math.random()*500),Math.floor(Math.random()*500))
+            drw();
+          }
+          else if(shape === "circle"){
+            addCircle(Math.floor(Math.random()*50),shapeColor,Math.floor(Math.random()*500),Math.floor(Math.random()*500))
+            drw();
+          }
+          else if(shape === "ellipse"){
+            addEllipse(Math.floor(Math.random()*200),Math.floor(Math.random()*200),shapeColor,Math.floor(Math.random()*500),Math.floor(Math.random()*500))
+            drw();
+          }
+          else if(shape ==="line"){
+            addLine(Math.floor(Math.random()*500),Math.floor(Math.random()*500),Math.floor(Math.random()*500), Math.floor(Math.random()*500),Math.floor(Math.random()*10),shapeColor);
+            drw();
+          }
+
+        }
+
+
+
+        stateRouter = ()=>{
+          console.log("state: "+state)
+          console.log("subState: "+subState)
+
+          if (state === "start"){
+            stateHandlerStart();
+          }
+          else if(state === "newShape"){
+            stateHandlerNewShape();
+          }
+        }
+
+        stateHandlerStart = () =>{
+          console.log("stateHandlerStart()")
+          if (finalTranscript.includes("new shape") || finalTranscript.includes("New shape")){
+            state = "newShape";
+            document.getElementById("stateBox").innerHTML="Which shape?"
+          }
+        } //stateZeroHandler
+
+        stateHandlerNewShape = ()=>{
+          console.log("stateHandlerNewShape()")
+          if (subState === 0){
+            setShapeType();
+          }
+
+          else if(subState === 1){
+            setShapeColor();
+          }
+
+        }
+
+        setShapeType = ()=>{
+          if (finalTranscript.includes("rectangle") || finalTranscript.includes("Rectangle")){
+            shape = "rectangle";
+            subState++;
+            document.getElementById("stateBox").innerHTML = "what color?";          
+          }
+          else if(finalTranscript.includes("circle") || finalTranscript.includes("Circle")){
+            shape = "circle";
+            subState++;
+            document.getElementById("stateBox").innerHTML = "what color?";
+          }
+          else if(finalTranscript.includes("ellipse") || finalTranscript.includes("Ellipse")){
+            shape = "ellipse";
+            subState++;
+            document.getElementById("stateBox").innerHTML = "what color?";
+          }
+          else if(finalTranscript.includes("line") || finalTranscript.includes("Line")){
+            shape = "line";
+            subState++;
+            document.getElementById("stateBox").innerHTML = "what color?";
+          }
+        }
+
+        setShapeColor = () =>{
+          if (checkColorsOne.includes(finalTranscript.replace(" ","")) || checkColorsTwo.includes(finalTranscript.replace(" ",""))){
+            shapeColor = colors[checkColorsOne.indexOf(finalTranscript.replace(" ",""))] || colors[checkColorsTwo.indexOf(finalTranscript.replace(" ",""))];
+            checkTwo()
+          }
+          subState = 0
+          document.getElementById("stateBox").innerHTML = "";
         }
 
         document.getElementById('speechResult').innerHTML = finalTranscript + '<i style="color:#ddd;">' + interimTranscript + '</>';
@@ -160,7 +268,7 @@
       </div>
 
       <div id = "speechResult"></div>
-
+      <div id = "stateBox"></div>
     
     </div>
 
@@ -197,8 +305,13 @@
       else if (currShape.type === "line"){
         drawLine(currShape.xOne,currShape.yOne,currShape.xTwo,currShape.yTwo,currShape.strokeWidth,currShape.strokeColor);
       }
-
     }
+
+    //relates to above script section 
+    state = "start";
+    document.getElementById("stateBox").innerHTML = "";
+
+
   }
 
   clr = () => {
@@ -290,6 +403,7 @@
   return color;
 }
   
-
-
+var colors = ['AliceBlue','AntiqueWhite','Aqua','Aquamarine','Azure','Beige','Bisque','Black','BlanchedAlmond','Blue','BlueViolet','Brown','BurlyWood','CadetBlue','Chartreuse','Chocolate','Coral','CornflowerBlue','Cornsilk','Crimson','Cyan','DarkBlue','DarkCyan','DarkGoldenRod','DarkGray','DarkGrey','DarkGreen','DarkKhaki','DarkMagenta','DarkOliveGreen','DarkOrange','DarkOrchid','DarkRed','DarkSalmon','DarkSeaGreen','DarkSlateBlue','DarkSlateGray','DarkSlateGrey','DarkTurquoise','DarkViolet','DeepPink','DeepSkyBlue','DimGray','DimGrey','DodgerBlue','FireBrick','FloralWhite','ForestGreen','Fuchsia','Gainsboro','GhostWhite','Gold','GoldenRod','Gray','Grey','Green','GreenYellow','HoneyDew','HotPink','IndianRed','Indigo','Ivory','Khaki','Lavender','LavenderBlush','LawnGreen','LemonChiffon','LightBlue','LightCoral','LightCyan','LightGoldenRodYellow','LightGray','LightGrey','LightGreen','LightPink','LightSalmon','LightSeaGreen','LightSkyBlue','LightSlateGray','LightSlateGrey','LightSteelBlue','LightYellow','Lime','LimeGreen','Linen','Magenta','Maroon','MediumAquaMarine','MediumBlue','MediumOrchid','MediumPurple','MediumSeaGreen','MediumSlateBlue','MediumSpringGreen','MediumTurquoise','MediumVioletRed','MidnightBlue','MintCream','MistyRose','Moccasin','NavajoWhite','Navy','OldLace','Olive','OliveDrab','Orange','OrangeRed','Orchid','PaleGoldenRod','PaleGreen','PaleTurquoise','PaleVioletRed','PapayaWhip','PeachPuff','Peru','Pink','Plum','PowderBlue','Purple','RebeccaPurple','Red','RosyBrown','RoyalBlue','SaddleBrown','Salmon','SandyBrown','SeaGreen','SeaShell','Sienna','Silver','SkyBlue','SlateBlue','SlateGray','SlateGrey','Snow','SpringGreen','SteelBlue','Tan','Teal','Thistle','Tomato','Turquoise','Violet','Wheat','White','WhiteSmoke','Yellow','YellowGreen']
+var checkColorsOne = ['Alice blue', 'Antique white', 'Aqua', 'Aquamarine', 'Azure', 'Beige', 'Bisque', 'Black', 'Blanched almond', 'Blue', 'Blue violet', 'Brown', 'Burly wood', 'Cadet blue', 'Chartreuse', 'Chocolate', 'Coral', 'Cornflower blue', 'Cornsilk', 'Crimson', 'Cyan', 'Dark blue', 'Dark cyan', 'Dark golden rod', 'Dark gray', 'Dark grey', 'Dark green', 'Dark khaki', 'Dark magenta', 'Dark olive green', 'Dark orange', 'Dark orchid', 'Dark red', 'Dark salmon', 'Dark sea green', 'Dark slate blue', 'Dark slate gray', 'Dark slate grey', 'Dark turquoise', 'Dark violet', 'Deep pink', 'Deep sky blue', 'Dim gray', 'Dim grey', 'Dodger blue', 'Fire brick', 'Floral white', 'Forest green', 'Fuchsia', 'Gainsboro', 'Ghost white', 'Gold', 'Golden rod', 'Gray', 'Grey', 'Green', 'Green yellow', 'Honey dew', 'Hot pink', 'Indian red', 'Indigo', 'Ivory', 'Khaki', 'Lavender', 'Lavender blush', 'Lawn green', 'Lemon chiffon', 'Light blue', 'Light coral', 'Light cyan', 'Light golden rod yellow', 'Light gray', 'Light grey', 'Light green', 'Light pink', 'Light salmon', 'Light sea green', 'Light sky blue', 'Light slate gray', 'Light slate grey', 'Light steel blue', 'Light yellow', 'Lime', 'Lime green', 'Linen', 'Magenta', 'Maroon', 'Medium aqua marine', 'Medium blue', 'Medium orchid', 'Medium purple', 'Medium sea green', 'Medium slate blue', 'Medium spring green', 'Medium turquoise', 'Medium violet red', 'Midnight blue', 'Mint cream', 'Misty rose', 'Moccasin', 'Navajo white', 'Navy', 'Old lace', 'Olive', 'Olive drab', 'Orange', 'Orange red', 'Orchid', 'Pale golden rod', 'Pale green', 'Pale turquoise', 'Pale violet red', 'Papaya whip', 'Peach puff', 'Peru', 'Pink', 'Plum', 'Powder blue', 'Purple', 'Rebecca purple', 'Red', 'Rosy brown', 'Royal blue', 'Saddle brown', 'Salmon', 'Sandy brown', 'Sea green', 'Sea shell', 'Sienna', 'Silver', 'Sky blue', 'Slate blue', 'Slate gray', 'Slate grey', 'Snow', 'Spring green', 'Steel blue', 'Tan', 'Teal', 'Thistle', 'Tomato', 'Turquoise', 'Violet', 'Wheat', 'White', 'White smoke', 'Yellow', 'Yellow green']
+var checkColorsTwo = ['alice blue', 'antique white', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanched almond', 'blue', 'blue violet', 'brown', 'burly wood', 'cadet blue', 'chartreuse', 'chocolate', 'coral', 'cornflower blue', 'cornsilk', 'crimson', 'cyan', 'dark blue', 'dark cyan', 'dark golden rod', 'dark gray', 'dark grey', 'dark green', 'dark khaki', 'dark magenta', 'dark olive green', 'dark orange', 'dark orchid', 'dark red', 'dark salmon', 'dark sea green', 'dark slate blue', 'dark slate gray', 'dark slate grey', 'dark turquoise', 'dark violet', 'deep pink', 'deep sky blue', 'dim gray', 'dim grey', 'dodger blue', 'fire brick', 'floral white', 'forest green', 'fuchsia', 'gainsboro', 'ghost white', 'gold', 'golden rod', 'gray', 'grey', 'green', 'green yellow', 'honey dew', 'hot pink', 'indian red', 'indigo', 'ivory', 'khaki', 'lavender', 'lavender blush', 'lawn green', 'lemon chiffon', 'light blue', 'light coral', 'light cyan', 'light golden rod yellow', 'light gray', 'light grey', 'light green', 'light pink', 'light salmon', 'light sea green', 'light sky blue', 'light slate gray', 'light slate grey', 'light steel blue', 'light yellow', 'lime', 'lime green', 'linen', 'magenta', 'maroon', 'medium aqua marine', 'medium blue', 'medium orchid', 'medium purple', 'medium sea green', 'medium slate blue', 'medium spring green', 'medium turquoise', 'medium violet red', 'midnight blue', 'mint cream', 'misty rose', 'moccasin', 'navajo white', 'navy', 'old lace', 'olive', 'olive drab', 'orange', 'orange red', 'orchid', 'pale golden rod', 'pale green', 'pale turquoise', 'pale violet red', 'papaya whip', 'peach puff', 'peru', 'pink', 'plum', 'powder blue', 'purple', 'rebecca purple', 'red', 'rosy brown', 'royal blue', 'saddle brown', 'salmon', 'sandy brown', 'sea green', 'sea shell', 'sienna', 'silver', 'sky blue', 'slate blue', 'slate gray', 'slate grey', 'snow', 'spring green', 'steel blue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'white smoke', 'yellow', 'yellow green']
 </script>
